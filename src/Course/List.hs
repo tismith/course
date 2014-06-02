@@ -72,8 +72,8 @@ headOr ::
   a
   -> List a
   -> a
-headOr =
-  error "todo"
+headOr a Nil = a
+headOr _ (x :. _) = x
 
 -- | The product of the elements of a list.
 --
@@ -85,8 +85,8 @@ headOr =
 product ::
   List Int
   -> Int
-product =
-  error "todo"
+product (x :. Nil) = x
+product (x :. xs) = x * (product xs)
 
 -- | Sum the elements of the list.
 --
@@ -100,8 +100,8 @@ product =
 sum ::
   List Int
   -> Int
-sum =
-  error "todo"
+sum (x :. Nil) = x
+sum (x :. xs) = x + (sum xs)
 
 -- | Return the length of the list.
 --
@@ -112,8 +112,8 @@ sum =
 length ::
   List a
   -> Int
-length =
-  error "todo"
+length Nil = 0
+length (_ :. xs) = 1 + (length xs)
 
 -- | Map the given function on each element of the list.
 --
@@ -127,9 +127,9 @@ map ::
   (a -> b)
   -> List a
   -> List b
-map =
-  error "todo"
-
+map _ Nil = Nil
+map f (x :. xs) = f x :. (map f xs)
+  
 -- | Return elements satisfying the given predicate.
 --
 -- >>> filter even (1 :. 2 :. 3 :. 4 :. 5 :. Nil)
@@ -144,8 +144,8 @@ filter ::
   (a -> Bool)
   -> List a
   -> List a
-filter =
-  error "todo"
+filter _ Nil = Nil
+filter f (x :. xs) = if (f x) then x :. (filter f xs) else filter f xs
 
 -- | Append two lists to a new list.
 --
@@ -163,8 +163,8 @@ filter =
   List a
   -> List a
   -> List a
-(++) =
-  error "todo"
+(++) Nil ys = ys
+(++) (x :. xs) ys = x :. (xs ++ ys)
 
 infixr 5 ++
 
@@ -292,8 +292,8 @@ lengthGT4 =
 reverse ::
   List a
   -> List a
-reverse =
-  error "todo"
+reverse Nil = Nil
+reverse (x :. xs) = (reverse xs) ++ (x :. Nil)
 
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
