@@ -85,6 +85,7 @@ headOr _ (x :. _) = x
 product ::
   List Int
   -> Int
+product Nil = error "empty list"
 product (x :. Nil) = x
 product (x :. xs) = x * (product xs)
 
@@ -100,6 +101,7 @@ product (x :. xs) = x * (product xs)
 sum ::
   List Int
   -> Int
+sum Nil = error "empty list"
 sum (x :. Nil) = x
 sum (x :. xs) = x + (sum xs)
 
@@ -182,7 +184,7 @@ flatten ::
   List (List a)
   -> List a
 flatten =
-  error "todo"
+  foldRight (++) Nil
 
 -- | Map a function then flatten to a list.
 --
@@ -198,8 +200,8 @@ flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap =
-  error "todo"
+flatMap f =
+  flatten . (map f)
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
@@ -209,7 +211,7 @@ flattenAgain ::
   List (List a)
   -> List a
 flattenAgain =
-  error "todo"
+  flatMap id
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -236,8 +238,10 @@ flattenAgain =
 seqOptional ::
   List (Optional a)
   -> Optional (List a)
-seqOptional =
-  error "todo"
+--seqOptional Nil = Full Nil
+--seqOptional (x :. xs) = mapOptional (\a -> a :. seqOptional xs) x
+seqOptional = foldRight (twiceOptional (:.)) (Full Nil)
+
 
 -- | Find the first element in the list matching the predicate.
 --
@@ -259,8 +263,9 @@ find ::
   (a -> Bool)
   -> List a
   -> Optional a
-find =
-  error "todo"
+find _ Nil = Empty
+find f (x :. xs) = ifThenElse (f x) (Full x) (find f xs)
+  
 
 -- | Determine if the length of the given list is greater than 4.
 --
@@ -278,8 +283,12 @@ find =
 lengthGT4 ::
   List a
   -> Bool
-lengthGT4 =
-  error "todo"
+lengthGT4 Nil = False
+lengthGT4 (_ :. Nil) = False
+lengthGT4 (_ :. _ :. Nil) = False
+lengthGT4 (_ :. _ :. _ :. Nil) = False
+lengthGT4 (_ :. _ :. _ :. _ :. Nil) = False
+lengthGT4 _ = True
 
 -- | Reverse a list.
 --
@@ -307,8 +316,8 @@ produce ::
   (a -> a)
   -> a
   -> List a
-produce =
-  error "todo"
+produce f a =
+  a :. (produce f (f a))
 
 -- | Do anything other than reverse a list.
 -- Is it even possible?
@@ -323,7 +332,7 @@ notReverse ::
   List a
   -> List a
 notReverse =
-  error "todo"
+  reverse
 
 hlist ::
   List a
