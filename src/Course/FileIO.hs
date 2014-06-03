@@ -62,8 +62,11 @@ the contents of c
 -- /Tip:/ use @getArgs@ and @run@
 main ::
   IO ()
-main =
-  error "todo"
+main = do
+  f <- getArgs
+  case f of
+    fn :. Nil -> run fn
+    _ -> putStrLn "invalid args"
 
 type FilePath =
   Chars
@@ -72,31 +75,36 @@ type FilePath =
 run ::
   Chars
   -> IO ()
-run =
-  error "todo"
+run f = do
+  c <- readFile f
+  x <- (getFiles . lines) c
+  printFiles x
 
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles =
-  error "todo"
+getFiles Nil = pure Nil
+getFiles (x :. xs) = do
+    y <- getFile x
+    z <- getFiles xs
+    return (y :. z)
 
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile =
-  error "todo"
+getFile f =
+  readFile f >>= pure . ((,) f)
 
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles =
-  error "todo"
+printFiles Nil = pure ()
+printFiles ((f, x) :. xs) = (printFile f x) >> printFiles xs
 
 printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile =
-  error "todo"
+printFile f xs =
+    putStrLn ("==============" ++ f) >> putStrLn xs
 
