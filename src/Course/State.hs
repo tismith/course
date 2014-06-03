@@ -35,8 +35,8 @@ newtype State s a =
 -- >>> runState ((+1) <$> pure 0) 0
 -- (1,0)
 instance Functor (State s) where
-  (<$>) =
-      error "todo"
+  f <$> sa =
+    State (\s -> let (a, ns) = runState sa s in (f a, ns))
 
 -- | Implement the `Apply` instance for `State s`.
 -- >>> runState (pure (+1) <*> pure 0) 0
@@ -46,22 +46,27 @@ instance Functor (State s) where
 -- >>> runState (State (\s -> ((+3), s P.++ ["apple"])) <*> State (\s -> (7, s P.++ ["banana"]))) []
 -- (10,["apple","banana"])
 instance Apply (State s) where
-  (<*>) =
-    error "todo"
+ sf <*> sa =
+    State (\s -> 
+        let (f, s1) = runState sf s in
+        let (a, s2) = runState sa s1 in
+        (f a, s2))
 
 -- | Implement the `Applicative` instance for `State s`.
 -- >>> runState (pure 2) 0
 -- (2,0)
 instance Applicative (State s) where
-  pure =
-    error "todo"
+  pure a =
+    State (\s -> (a, s))
 
 -- | Implement the `Bind` instance for `State s`.
 -- >>> runState ((const $ put 2) =<< put 1) 0
 -- ((),2)
 instance Bind (State s) where
-  (=<<) =
-    error "todo"
+ fsb =<< sa =
+    State (\s -> 
+        let (a, s1) = runState sa s in
+        runState (fsb a) s1)
 
 instance Monad (State s) where
 
@@ -72,8 +77,7 @@ exec ::
   State s a
   -> s
   -> s
-exec =
-  error "todo"
+exec sa s = snd $ runState sa s
 
 -- | Run the `State` seeded with `s` and retrieve the resulting value.
 --
@@ -82,8 +86,7 @@ eval ::
   State s a
   -> s
   -> a
-eval =
-  error "todo"
+eval sa s = fst $ runState sa s
 
 -- | A `State` where the state also distributes into the produced value.
 --
@@ -92,7 +95,7 @@ eval =
 get ::
   State s s
 get =
-  error "todo"
+  State (\s -> (s, s))
 
 -- | A `State` where the resulting state is seeded with the given value.
 --
@@ -101,8 +104,8 @@ get =
 put ::
   s
   -> State s ()
-put =
-  error "todo"
+put s =
+  State (const ((), s))
 
 -- | Find the first element in a `List` that satisfies a given predicate.
 -- It is possible that no element is found, hence an `Optional` result.
@@ -123,8 +126,9 @@ findM ::
   (a -> f Bool)
   -> List a
   -> f (Optional a)
-findM =
-  error "todo"
+findM = error "todo"
+--findM _ Nil = pure Empty
+--findM f (x :. xs) = ifThenElse <$> f x <*> pure . Full x <*> findM f xs
 
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
