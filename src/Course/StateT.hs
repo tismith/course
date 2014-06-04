@@ -35,8 +35,14 @@ newtype StateT s f a =
 -- >>> runStateT ((+1) <$> (pure 2) :: StateT Int List Int) 0
 -- [(3,0)]
 instance Functor f => Functor (StateT s f) where
-  (<$>) =
-    error "todo"
+-- g :: a -> b
+-- sa :: StateT s f a 
+-- runStateT sa :: s -> f (a, s)
+-- runStateT sa :: f (a, s) --e.g [(a,s)]
+-- (<$>) :: (a -> b) -> f a -> f b
+-- (<$>) :: (a -> b) -> StateT f s a -> StateT f s b --StateT specialization
+  g <$> sa =
+    StateT (\s -> (\(a, s1) -> (g a, s1)) <$> (runStateT sa s))
 
 -- | Implement the `Apply` instance for @StateT s f@ given a @Bind f@.
 --
@@ -47,8 +53,25 @@ instance Functor f => Functor (StateT s f) where
 -- >>> runStateT (StateT (\s -> Full ((+2), s P.++ [1])) <*> (StateT (\s -> Full (2, s P.++ [2])))) [0]
 -- Full (4,[0,1,2])
 instance Bind f => Apply (StateT s f) where
-  (<*>) =
-    error "todo"
+-- (<*>) :: f (a -> b) -> f a -> f b --e.g. StateT f s (a -> b) -> StateT f s a -> StateT f s b
+-- e.g. (s -> f (a -> b))
+-- =<< :: (a -> f b) -> f a -> f b
+-- <=< :: (b -> f c) -> (a -> f b) -> a -> f c
+  -- runStateT fa :: s -> f (a, s)
+  -- fa :: StateT f s a 
+  f <*> a = 
+----------------------------------------------------
+--     StateT $ \s -> do 
+--         (f', s') <- runStateT f s
+--         (a', s'') <- runStateT a s'
+--         return (f' a', s'')
+---------------------------------------------------- 
+----------------------------------------------------
+--     StateT $ \s -> 
+--         runStateT f s >>= (\(f', s') ->
+--         runStateT a s' >>= (\(a', s'') ->
+--         pure (f' a', s'')))
+---------------------------------------------------- 
 
 -- | Implement the `Applicative` instance for @StateT s f@ given a @Applicative f@.
 --
@@ -58,8 +81,8 @@ instance Bind f => Apply (StateT s f) where
 -- >>> runStateT ((pure 2) :: StateT Int List Int) 0
 -- [(2,0)]
 instance Monad f => Applicative (StateT s f) where
-  pure =
-    error "todo"
+  pure a =
+    StateT (\s -> pure (a, s))
 
 -- | Implement the `Bind` instance for @StateT s f@ given a @Monad f@.
 -- Make sure the state value is passed through in `bind`.
