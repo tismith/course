@@ -137,7 +137,7 @@ filtering ::
   -> List a
   -> f (List a)
 filtering _ Nil = pure Nil
-filtering f (x :. xs) = ifThenElse <$> f x <*> ((:.) x <$> filtering f xs) <*> filtering f xs
+filtering f (x :. xs) = ifThenElse <$> f x <*> ((x :.) <$> filtering f xs) <*> filtering f xs
 
 -----------------------
 -- SUPPORT LIBRARIES --

@@ -165,8 +165,7 @@ distinct xs =
         p x = get >>= 
             (\s -> put (S.insert x s) 
                 >>= (const $ pure $ not $ S.member x s)) in 
-    eval (filtering p xs) S.empty
-    --this hangs...
+    eval (filtering (p) xs) S.empty
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
@@ -197,6 +196,7 @@ isHappy x =
     makeHappy i = sum $ (\z -> z * z) <$> digitToInt <$> (listh $ show i)
     p a = get >>= 
         (\(_, s) -> put (if a == 1 then Full True else if S.member a s then Full False else Empty, S.insert a s) >>= 
-            (const $ if a == 1 then pure True else if S.member a s then pure True else pure False)) in 
+            (const $ get >>= (\(r, _) -> case r of 
+                Full _ -> pure True
+                Empty -> pure False))) in
   contains True $ fst $ exec (findM p $ produce (makeHappy) (P.fromIntegral x)) (Empty, S.empty)
-  --ick
