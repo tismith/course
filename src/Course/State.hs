@@ -126,10 +126,9 @@ findM ::
   (a -> f Bool)
   -> List a
   -> f (Optional a)
-findM = error "todo"
---findM _ Nil = pure Empty
---findM f (x :. xs) = ifThenElse <$> f x <*> pure . Full x <*> findM f xs
-
+findM _ Nil = pure Empty
+findM p (x :. xs) = (p x) >>= (\b -> ifThenElse b (pure $ Full x) (findM p xs))
+        
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
 --
@@ -141,8 +140,15 @@ firstRepeat ::
   Ord a =>
   List a
   -> Optional a
-firstRepeat =
-  error "todo"
+firstRepeat xs =
+----------------------------------------------------
+--         let p x = do
+--             s <- get
+--             put $ S.insert x s
+--             pure $ S.member x s
+--         in eval (findM p $ xs) S.empty
+---------------------------------------------------- 
+    let p x = get >>= (\s -> put (S.insert x s) >>= (const $ (pure (S.member x s)))) in eval (findM p xs) S.empty
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
@@ -154,8 +160,13 @@ distinct ::
   Ord a =>
   List a
   -> List a
-distinct =
-  error "todo"
+distinct xs =
+    let 
+        p x = get >>= 
+            (\s -> put (S.insert x s) 
+                >>= (const $ pure $ not $ S.member x s)) in 
+    eval (filtering p xs) S.empty
+    --this hangs...
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
@@ -181,5 +192,11 @@ distinct =
 isHappy ::
   Integer
   -> Bool
-isHappy =
-  error "todo"
+isHappy x =
+  let 
+    makeHappy i = sum $ (\z -> z * z) <$> digitToInt <$> (listh $ show i)
+    p a = get >>= 
+        (\(_, s) -> put (if a == 1 then Full True else if S.member a s then Full False else Empty, S.insert a s) >>= 
+            (const $ if a == 1 then pure True else if S.member a s then pure True else pure False)) in 
+  contains True $ fst $ exec (findM p $ produce (makeHappy) (P.fromIntegral x)) (Empty, S.empty)
+  --ick

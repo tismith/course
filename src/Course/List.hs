@@ -85,7 +85,7 @@ headOr _ (x :. _) = x
 product ::
   List Int
   -> Int
-product Nil = error "empty list"
+product Nil = 0
 product (x :. Nil) = x
 product (x :. xs) = x * (product xs)
 
@@ -101,7 +101,7 @@ product (x :. xs) = x * (product xs)
 sum ::
   List Int
   -> Int
-sum Nil = error "empty list"
+sum Nil = 0
 sum (x :. Nil) = x
 sum (x :. xs) = x + (sum xs)
 
