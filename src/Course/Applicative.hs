@@ -137,7 +137,11 @@ filtering ::
   -> List a
   -> f (List a)
 filtering _ Nil = pure Nil
-filtering f (x :. xs) = ifThenElse <$> f x <*> ((x :.) <$> filtering f xs) <*> filtering f xs
+filtering f (x :. xs) =
+    let rest = filtering f xs in
+    (((\a -> if a then (x:.) else id)) <$> f x) <*> rest
+--filtering f (x :. xs) = ifThenElse <$> f x <*> ((x :.) <$> filtering f xs) <*> filtering f xs
+-- ^^ this option is borked - it runs f heeeeeeeeeeeaps of times as it progresses through the list
 ----------------------------------------------------
 -- Nicta solution
 -- filtering p = 
