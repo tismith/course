@@ -138,6 +138,11 @@ filtering ::
   -> f (List a)
 filtering _ Nil = pure Nil
 filtering f (x :. xs) = ifThenElse <$> f x <*> ((x :.) <$> filtering f xs) <*> filtering f xs
+----------------------------------------------------
+-- Nicta solution
+-- filtering p = 
+--     foldRight (\a -> lift2 (\b -> if b then (a:.) else id) (p a)) (pure Nil)
+---------------------------------------------------- 
 
 -----------------------
 -- SUPPORT LIBRARIES --

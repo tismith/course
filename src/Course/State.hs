@@ -164,8 +164,9 @@ distinct xs =
     let 
         p x = get >>= 
             (\s -> put (S.insert x s) 
-                >>= (const $ pure $ not $ S.member x s)) in 
-    eval (filtering (p) xs) S.empty
+                >>= (const $ pure $ S.notMember x s)) in 
+    eval (filtering p xs) S.empty
+    -- this was hanging with my original filtering implementation
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
