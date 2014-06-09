@@ -332,9 +332,45 @@ log1 l a = Logger (pure l) a
 --
 -- >>> distinctG $ listh [1,2,3,2,6,106]
 -- Logger ["even number: 2","even number: 2","even number: 6","aborting > 100: 106"] Empty
+
+liftOptional :: (Monad m) => m a -> OptionalT m a
+liftOptional ma = OptionalT (ma >>= (\a -> pure $ Full a))
+
+liftState :: (Monad m) => m a -> StateT s m a
+liftState ma = StateT (\s -> ma >>= (\a -> pure (a, s)))
+
 distinctG ::
   (Integral a, Show a) =>
   List a
   -> Logger Chars (Optional (List a))
-distinctG =
-  error "todo"
+distinctG xs =
+    let p x = (getT >>= 
+            (\s -> putT (S.insert x s) 
+                >>= (const $ if x > 100 then 
+                    liftState $ OptionalT $ log1 ("aborting > 100: " ++ (listh . show $ x)) Empty else
+                        if (0 == x `mod` 2) then 
+                            liftState $ liftOptional $ log1 ("even number: " ++ (listh . show $ x)) $ S.notMember x s else
+                            pure $ S.notMember x s))) in 
+    runOptionalT $ evalT (filtering (p) xs) S.empty
+----------------------------------------------------
+--     let p x = (getT >>= 
+--             (\s -> putT (S.insert x s) 
+--                 >>= (const $ if x > 100 then 
+--                     StateT (const $ OptionalT $ log1 ("aborting > 100: " ++ (listh . show $ x)) Empty) else
+--                         if (0 == x `mod` 2) then 
+--                             StateT (\s' -> OptionalT $ log1 ("even number: " ++ (listh . show $ x)) $ Full (S.notMember x s, s')) else
+--                             StateT (\s' -> OptionalT $ Logger (Nil) $ Full $ (S.notMember x s, s'))))) in 
+--     runOptionalT $ evalT (filtering (p) xs) S.empty
+---------------------------------------------------- 
+
+----------------------------------------------------
+-- With do notation, and MonadTrans (for lift)
+--     let p x = do 
+--             s <- getT
+--             putT (S.insert x s) 
+--             if x > 100 then 
+--                     lift $ OptionalT $ log1 ("aborting > 100: " ++ (listh . show $ x)) Empty else
+--                         if (0 == x `mod` 2) then 
+--                             lift .lift $ log1 ("even number: " ++ (listh . show $ x)) $ S.notMember x s else
+--                             pure $ S.notMember x s))) in 
+---------------------------------------------------- 
