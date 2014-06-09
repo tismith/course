@@ -23,8 +23,7 @@ infixr 1 <<=
 -- >>> id <<= Id 7
 -- Id (Id 7)
 instance Extend Id where
-  (<<=) =
-    error "todo"
+ mf <<= ma = Id $ mf ma 
 
 -- | Implement the @Extend@ instance for @List@.
 --
@@ -37,8 +36,9 @@ instance Extend Id where
 -- >>> reverse <<= ((1 :. 2 :. 3 :. Nil) :. (4 :. 5 :. 6 :. Nil) :. Nil)
 -- [[[4,5,6],[1,2,3]],[[4,5,6]]]
 instance Extend List where
-  (<<=) =
-    error "todo"
+ -- (f a -> b) -> f a -> f b
+ _ <<= Nil = Nil
+ f <<= ma@(_ :. mas) = (f ma) :. (f <<= mas)
 
 -- | Implement the @Extend@ instance for @Optional@.
 --
@@ -48,8 +48,8 @@ instance Extend List where
 -- >>> id <<= Empty
 -- Empty
 instance Extend Optional where
-  (<<=) =
-    error "todo"
+  _ <<= Empty = Empty
+  mf <<= ma@(Full _) = Full $ mf ma
 
 -- | Duplicate the functor using extension.
 --
@@ -68,5 +68,6 @@ cojoin ::
   Extend f =>
   f a
   -> f (f a)
-cojoin =
-  error "todo"
+cojoin ma = id <<= ma
+-- this also type checks, but is the wrong behavious for lists at least
+cojoin ma = (const ma) <<= ma
