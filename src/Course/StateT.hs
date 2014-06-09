@@ -221,6 +221,7 @@ distinctF xs =
             (\s -> putT (S.insert x s) 
                 >>= (const $ if x > 100 then StateT (const Empty) else StateT (\s' -> Full $ (S.notMember x s, s')))) in 
     evalT (filtering (p) xs) $ S.empty
+    -- this is a pretty shitty api for StateT - I wonder if the lift etc I've seen would help with writing this...
 
 -- | An `OptionalT` is a functor of an `Optional` value.
 data OptionalT f a =
@@ -237,9 +238,7 @@ instance Functor f => Functor (OptionalT f) where
   -- <$> :: (a -> b) -> f a -> f b
   --     :: (a -> b) -> OptionalT f a -> OptionalT f b
  f <$> OptionalT fa =
-    OptionalT $ (\x -> case x of 
-        Empty -> Empty
-        Full a -> Full $ f a) <$> fa
+    OptionalT $ (f <$>) <$> fa
 
 -- | Implement the `Apply` instance for `OptionalT f` given a Apply f.
 --
@@ -247,7 +246,9 @@ instance Functor f => Functor (OptionalT f) where
 -- [Full 2,Empty,Full 3,Empty]
 instance Apply f => Apply (OptionalT f) where
 -- <*> :: f (a -> b) -> f a -> f b
-    OptionalT mf <*> OptionalT ma = error "todo"
+--     :: f (Optional (a -> b)) -> f (Optional a) -> f (Optional b)
+    OptionalT mf <*> OptionalT ma = OptionalT ((<*>) <$> mf <*> ma)
+    -- want to f <*> a, but at too low a level, so lift it
 
 -- | Implement the `Applicative` instance for `OptionalT f` given a Applicative f.
 instance Applicative f => Applicative (OptionalT f) where
@@ -259,8 +260,12 @@ instance Applicative f => Applicative (OptionalT f) where
 -- >>> runOptionalT $ (\a -> OptionalT (Full (a+1) :. Full (a+2) :. Nil)) =<< OptionalT (Full 1 :. Empty :. Nil)
 -- [Full 2,Full 3,Empty]
 instance Monad f => Bind (OptionalT f) where
-  (=<<) =
-    error "todo"
+  -- (a -> f b) =<< f a -> f b
+  -- (a -> f m b) =<< f m a -> f m b 
+  -- (a -> OptionalT f (Optional b)) =<< OptionalT f (Optional a) -> OptionalT f (Optional b)
+   f =<< OptionalT ma = OptionalT $ (\x -> case x of 
+                        Full y -> runOptionalT $ f y
+                        Empty -> pure Empty) =<< ma
 
 instance Monad f => Monad (OptionalT f) where
 
@@ -274,18 +279,21 @@ data Logger l a =
 -- >>> (+3) <$> Logger (listh [1,2]) 3
 -- Logger [1,2] 6
 instance Functor (Logger l) where
-  (<$>) =
-    error "todo"
+-- (a -> b) -> f a -> f b
+-- (a -> b) -> Logger (List l) a -> Logger (List l') b
+  f <$> Logger l a =
+    Logger l (f a)
 
 -- | Implement the `Apply` instance for `Logger`.
 instance Apply (Logger l) where
-  (<*>) =
-    error "todo"
+-- f (a -> b) -> f a -> f b
+  (Logger l f) <*> (Logger l' a) =
+    Logger (l ++ l') (f a)
 
 -- | Implement the `Applicative` instance for `Logger`.
 instance Applicative (Logger l) where
-  pure =
-    error "todo"
+  pure a =
+    Logger Nil a
 
 -- | Implement the `Bind` instance for `Logger`.
 -- The `bind` implementation must append log values to maintain associativity.
@@ -293,8 +301,10 @@ instance Applicative (Logger l) where
 -- >>> (\a -> Logger (listh [4,5]) (a+3)) =<< Logger (listh [1,2]) 3
 -- Logger [1,2,4,5] 6
 instance Bind (Logger l) where
-  (=<<) =
-    error "todo"
+-- (=<<) (a -> m b) (m a) -> m b
+  f =<< (Logger l a) =
+    let Logger l' b = f a in
+    Logger (l ++ l') b
 
 instance Monad (Logger l) where
 
@@ -306,8 +316,7 @@ log1 ::
   l
   -> a
   -> Logger l a
-log1 =
-  error "todo"
+log1 l a = Logger (pure l) a
 
 -- | Remove all duplicate integers from a list. Produce a log as you go.
 -- If there is an element above 100, then abort the entire computation and produce no result.
