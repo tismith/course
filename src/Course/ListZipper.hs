@@ -247,8 +247,9 @@ findLeft ::
   (a -> Bool)
   -> ListZipper a
   -> MaybeListZipper a
-findLeft =
-  error "todo"
+findLeft f (ListZipper Nil d r) = if f d then IsZ (ListZipper Nil d r) else IsNotZ
+findLeft f (ListZipper l@(x :. xs) d r) = if f d then IsZ (ListZipper l d r) else findLeft f (ListZipper xs x (d :. r))
+  
 
 -- | Seek to the right for a location matching a predicate, starting from the
 -- current one.
@@ -263,8 +264,8 @@ findRight ::
   (a -> Bool)
   -> ListZipper a
   -> MaybeListZipper a
-findRight =
-  error "todo"
+findRight f lz@(ListZipper _ d Nil) = if f d then IsZ lz else IsNotZ
+findRight f lz@(ListZipper l d (r :. rs)) = if f d then IsZ lz else findRight f (ListZipper (d :. l) r rs)
 
 -- | Move the zipper left, or if there are no elements to the left, go to the far right.
 --
@@ -276,8 +277,8 @@ findRight =
 moveLeftLoop ::
   ListZipper a
   -> ListZipper a
-moveLeftLoop =
-  error "todo"
+moveLeftLoop (ListZipper (l :. ls) d r) = ListZipper ls l (d :. r)
+moveLeftLoop (ListZipper Nil d r) = let (nr :. rs) = reverse (d :. r) in ListZipper rs nr Nil
 
 -- | Move the zipper right, or if there are no elements to the right, go to the far left.
 --
@@ -289,8 +290,8 @@ moveLeftLoop =
 moveRightLoop ::
   ListZipper a
   -> ListZipper a
-moveRightLoop =
-  error "todo"
+moveRightLoop (ListZipper l d (r :. rs)) = ListZipper (d :. l) r rs
+moveRightLoop (ListZipper l d Nil) = let (nl :. ls) = reverse (d :. l) in ListZipper Nil nl ls
 
 -- | Move the zipper one position to the left.
 --
@@ -302,8 +303,8 @@ moveRightLoop =
 moveLeft ::
   ListZipper a
   -> MaybeListZipper a
-moveLeft =
-  error "todo"
+moveLeft (ListZipper (l :. ls) d r) = IsZ $ ListZipper ls l (d :. r)
+moveLeft (ListZipper Nil d r) = IsNotZ
 
 -- | Move the zipper one position to the right.
 --
@@ -315,8 +316,8 @@ moveLeft =
 moveRight ::
   ListZipper a
   -> MaybeListZipper a
-moveRight =
-  error "todo"
+moveRight (ListZipper l d (r :. rs)) = IsZ $ ListZipper (d :. l) r rs
+moveRight (ListZipper l d Nil) = IsNotZ
 
 -- | Swap the current focus with the value to the left of focus.
 --
