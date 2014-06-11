@@ -70,4 +70,4 @@ cojoin ::
   -> f (f a)
 cojoin ma = id <<= ma
 -- this also type checks, but is the wrong behavious for lists at least
-cojoin ma = (const ma) <<= ma
+--cojoin ma = (const ma) <<= ma
