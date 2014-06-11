@@ -78,8 +78,8 @@ unexpectedCharParser c =
 valueParser ::
   a
   -> Parser a
-valueParser =
-  error "todo"
+valueParser a =
+  P (\x -> Result x a)
 
 -- | Return a parser that always fails with the given error.
 --
@@ -88,7 +88,7 @@ valueParser =
 failed ::
   Parser a
 failed =
-  error "todo"
+  P (const $ ErrorResult Failed)
 
 -- | Return a parser that succeeds with a character off the input or fails with an error if the input is empty.
 --
@@ -100,7 +100,9 @@ failed =
 character ::
   Parser Char
 character =
-  error "todo"
+  P (\x -> case x of
+            Nil -> ErrorResult UnexpectedEof
+            (a :. as) -> Result as a)
 
 -- | Return a parser that maps any succeeding result with the given function.
 --
