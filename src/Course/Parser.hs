@@ -115,8 +115,10 @@ mapParser ::
   (a -> b)
   -> Parser a
   -> Parser b
-mapParser =
-  error "todo"
+mapParser f (P p) =
+  P (\x -> case p x of 
+        Result i a -> Result i (f a)
+        ErrorResult e -> ErrorResult e)
 
 -- | This is @mapParser@ with the arguments flipped.
 -- It might be more helpful to use this function if you prefer this argument order.
@@ -152,8 +154,10 @@ bindParser ::
   (a -> Parser b)
   -> Parser a
   -> Parser b
-bindParser =
-  error "todo"
+bindParser mf (P p) =
+    P (\i -> case p i of
+        Result i' a -> parse (mf a) i'
+        ErrorResult e -> ErrorResult e)
 
 -- | This is @bindParser@ with the arguments flipped.
 -- It might be more helpful to use this function if you prefer this argument order.
@@ -182,8 +186,9 @@ flbindParser =
   Parser a
   -> Parser b
   -> Parser b
-(>>>) =
-  error "todo"
+(P pa) >>> (P pb) = P (\x -> case pa x of
+                            Result i _ -> pb i
+                            ErrorResult e -> ErrorResult e)
 
 -- | Return a parser that tries the first parser for a successful value.
 --
@@ -206,8 +211,9 @@ flbindParser =
   Parser a
   -> Parser a
   -> Parser a
-(|||) =
-  error "todo"
+(P pa) ||| (P pb) = P (\x -> case pa x of
+                            ErrorResult _ ->  pb x
+                            r -> r)
 
 infixl 3 |||
 
@@ -235,7 +241,7 @@ infixl 3 |||
 list ::
   Parser a
   -> Parser (List a)
-list =
+list (P p) =
   error "todo"
 
 -- | Return a parser that produces at least one value from the given parser then
