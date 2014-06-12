@@ -241,8 +241,8 @@ infixl 3 |||
 list ::
   Parser a
   -> Parser (List a)
-list (P p) =
-  error "todo"
+--list p = (p `flbindParser` (\x -> mapParser (x :.) (list p))) ||| (mapParser (:. Nil) p ||| valueParser Nil)
+list p = (p `flbindParser` (\x -> mapParser (x :.) (list p))) ||| valueParser Nil
 
 -- | Return a parser that produces at least one value from the given parser then
 -- continues producing a list of values from the given parser (to ultimately produce a non-empty list).
@@ -261,8 +261,7 @@ list (P p) =
 list1 ::
   Parser a
   -> Parser (List a)
-list1 =
-  error "todo"
+list1 p = (p `flbindParser` (\x -> mapParser (x :.) (list p))) ||| (mapParser (:. Nil) p)
 
 -- | Return a parser that produces a character but fails if
 --
@@ -280,8 +279,12 @@ list1 =
 satisfy ::
   (Char -> Bool)
   -> Parser Char
-satisfy =
-  error "todo"
+satisfy f = P (\c -> case c of 
+                    Nil -> ErrorResult UnexpectedEof
+                    (x :. xs) -> if f x 
+                        then Result xs x
+                        else ErrorResult $ UnexpectedChar x)
+
 
 -- | Return a parser that produces the given character but fails if
 --
@@ -292,8 +295,7 @@ satisfy =
 -- /Tip:/ Use the @satisfy@ function.
 is ::
   Char -> Parser Char
-is =
-  error "todo"
+is c = satisfy (== c)
 
 -- | Return a parser that produces a character between '0' and '9' but fails if
 --
@@ -304,8 +306,7 @@ is =
 -- /Tip:/ Use the @satisfy@ and @Data.Char.isDigit@ functions.
 digit ::
   Parser Char
-digit =
-  error "todo"
+digit = satisfy (\x -> x == '0' || x == '1' || x == '2' || x == '3' || x == '4' || x == '5' || x == '6' || x == '7' || x == '8' || x == '9')
 
 -- | Return a parser that produces zero or a positive integer but fails if
 --
@@ -317,8 +318,7 @@ digit =
 -- functions.
 natural ::
   Parser Int
-natural =
-  error "todo"
+natural = error "todo"
 
 --
 -- | Return a parser that produces a space character but fails if
