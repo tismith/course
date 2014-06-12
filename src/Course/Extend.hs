@@ -24,7 +24,7 @@ infixr 1 <<=
 -- >>> id <<= Id 7
 -- Id (Id 7)
 instance Extend Id where
-  (<<=) ::
+ (<<=) ::
     (Id a -> b)
     -> Id a
     -> Id b
@@ -46,8 +46,8 @@ instance Extend List where
     (List a -> b)
     -> List a
     -> List b
- _ <<= Nil = Nil
- f <<= ma@(_ :. mas) = (f ma) :. (f <<= mas)
+  _ <<= Nil = Nil
+  f <<= ma@(_ :. mas) = (f ma) :. (f <<= mas)
 
 -- | Implement the @Extend@ instance for @Optional@.
 --
