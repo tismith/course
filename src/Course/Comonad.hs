@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Course.Comonad
 (
@@ -20,8 +21,10 @@ class Extend f => Comonad f where
 -- >>> copure (Id 7)
 -- 7
 instance Comonad Id where
+  copure ::
+    Id a
+    -> a
   copure (Id x) = x
-    
 
 -- | Witness that all things with (<<=) and copure also have (<$>).
 --

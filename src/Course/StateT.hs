@@ -285,12 +285,18 @@ instance Functor (Logger l) where
     Logger l (f a)
 
 -- | Implement the `Apply` instance for `Logger`.
+--
+-- >>> Logger (listh [1,2]) (+7) <*> Logger (listh [3,4]) 3
+-- Logger [1,2,3,4] 10
 instance Apply (Logger l) where
 -- f (a -> b) -> f a -> f b
   (Logger l f) <*> (Logger l' a) =
     Logger (l ++ l') (f a)
 
 -- | Implement the `Applicative` instance for `Logger`.
+--
+-- >>> pure "table" :: Logger Int P.String
+-- Logger [] "table"
 instance Applicative (Logger l) where
   pure a =
     Logger Nil a

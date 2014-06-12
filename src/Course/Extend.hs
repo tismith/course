@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Course.Extend where
 
@@ -23,6 +24,10 @@ infixr 1 <<=
 -- >>> id <<= Id 7
 -- Id (Id 7)
 instance Extend Id where
+  (<<=) ::
+    (Id a -> b)
+    -> Id a
+    -> Id b
  mf <<= ma = Id $ mf ma 
 
 -- | Implement the @Extend@ instance for @List@.
@@ -37,6 +42,10 @@ instance Extend Id where
 -- [[[4,5,6],[1,2,3]],[[4,5,6]]]
 instance Extend List where
  -- (f a -> b) -> f a -> f b
+  (<<=) ::
+    (List a -> b)
+    -> List a
+    -> List b
  _ <<= Nil = Nil
  f <<= ma@(_ :. mas) = (f ma) :. (f <<= mas)
 
@@ -48,6 +57,10 @@ instance Extend List where
 -- >>> id <<= Empty
 -- Empty
 instance Extend Optional where
+  (<<=) ::
+    (Optional a -> b)
+    -> Optional a
+    -> Optional b
   _ <<= Empty = Empty
   mf <<= ma@(Full _) = Full $ mf ma
 
