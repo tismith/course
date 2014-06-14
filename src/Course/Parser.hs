@@ -306,7 +306,7 @@ is c = satisfy (== c)
 -- /Tip:/ Use the @satisfy@ and @Data.Char.isDigit@ functions.
 digit ::
   Parser Char
-digit = satisfy (\x -> x == '0' || x == '1' || x == '2' || x == '3' || x == '4' || x == '5' || x == '6' || x == '7' || x == '8' || x == '9')
+digit = satisfy (isDigit)
 
 -- | Return a parser that produces zero or a positive integer but fails if
 --
@@ -316,9 +316,22 @@ digit = satisfy (\x -> x == '0' || x == '1' || x == '2' || x == '3' || x == '4' 
 --
 -- /Tip:/ Use the @bindParser@, @valueParser@, @list@, @read@ and @digit@
 -- functions.
+-- >>> parse (natural) "123"
+-- Result >< 123 
+--
+-- >>> parse (natural) "123ab"
+-- Result >ab< 123 
+--
+-- >>> isErrorResult (parse (natural) "abc")
+-- True
+--
+-- >>> isErrorResult (parse (natural) "")
+-- True
 natural ::
   Parser Int
-natural = error "todo"
+natural = (list1 (digit)) `flbindParser` (\x -> case read x of 
+                                            Full i -> valueParser i
+                                            Empty -> failed)
 
 --
 -- | Return a parser that produces a space character but fails if
@@ -328,10 +341,12 @@ natural = error "todo"
 --   * The produced character is not a space.
 --
 -- /Tip:/ Use the @satisfy@ and @Data.Char.isSpace@ functions.
+-- >>> parse (space) " a"
+-- Result >a< ' '
 space ::
   Parser Char
 space =
-  error "todo"
+  satisfy (isSpace)
 
 -- | Return a parser that produces one or more space characters
 -- (consuming until the first non-space) but fails if
@@ -344,7 +359,7 @@ space =
 spaces1 ::
   Parser Chars
 spaces1 =
-  error "todo"
+  list1 (space)
 
 -- | Return a parser that produces a lower-case character but fails if
 --
@@ -356,7 +371,7 @@ spaces1 =
 lower ::
   Parser Char
 lower =
-  error "todo"
+  satisfy (isLower)
 
 -- | Return a parser that produces an upper-case character but fails if
 --
@@ -368,7 +383,7 @@ lower =
 upper ::
   Parser Char
 upper =
-  error "todo"
+    satisfy (isUpper)
 
 -- | Return a parser that produces an alpha character but fails if
 --
@@ -380,7 +395,7 @@ upper =
 alpha ::
   Parser Char
 alpha =
-  error "todo"
+  satisfy (isAlpha)
 
 -- | Return a parser that sequences the given list of parsers by producing all their results
 -- but fails on the first failing parser of the list.
@@ -397,7 +412,7 @@ sequenceParser ::
   List (Parser a)
   -> Parser (List a)
 sequenceParser =
-  error "todo"
+    foldRight (\pa pb -> bindParser (\a -> mapParser (a :.) pb) pa) (valueParser Nil)
 
 -- | Return a parser that produces the given number of values off the given parser.
 -- This parser fails if the given parser fails in the attempt to produce the given number of values.
@@ -413,8 +428,8 @@ thisMany ::
   Int
   -> Parser a
   -> Parser (List a)
-thisMany =
-  error "todo"
+thisMany n pa =
+    sequenceParser $ replicate n pa
 
 -- | Write a parser for Person.age.
 --
@@ -433,7 +448,7 @@ thisMany =
 ageParser ::
   Parser Int
 ageParser =
-  error "todo"
+    natural
 
 -- | Write a parser for Person.firstName.
 -- /First Name: non-empty string that starts with a capital letter and is followed by zero or more lower-case letters/
@@ -447,8 +462,7 @@ ageParser =
 -- True
 firstNameParser ::
   Parser Chars
-firstNameParser =
-  error "todo"
+firstNameParser = upper `flbindParser` (\x -> mapParser (x :.) $ list (lower))
 
 -- | Write a parser for Person.surname.
 --
@@ -466,9 +480,8 @@ firstNameParser =
 -- True
 surnameParser ::
   Parser Chars
-surnameParser =
-  error "todo"
-
+surnameParser = upper `flbindParser` (\x -> mapParser (x :.) $ (thisMany 5 (lower))) `flbindParser` (\y -> mapParser (y ++) $ list (lower))
+    
 -- | Write a parser for Person.smoker.
 --
 -- /Smoker: character that must be @'y'@ or @'n'@/
@@ -486,7 +499,7 @@ surnameParser =
 smokerParser ::
   Parser Char
 smokerParser =
-  error "todo"
+  (satisfy ('y' ==)) ||| (satisfy ('n' ==))
 
 -- | Write part of a parser for Person.phoneBody.
 -- This parser will only produce a string of digits, dots or hyphens.
@@ -507,8 +520,7 @@ smokerParser =
 -- Result >a123-456< ""
 phoneBodyParser ::
   Parser Chars
-phoneBodyParser =
-  error "todo"
+phoneBodyParser = list (digit ||| (is '-'))
 
 -- | Write a parser for Person.phone.
 --
@@ -530,7 +542,7 @@ phoneBodyParser =
 phoneParser ::
   Parser Chars
 phoneParser =
-  error "todo"
+    digit `flbindParser` (\x -> mapParser (x :.) $ (phoneBodyParser)) `flbindParser` (\y -> mapParser (y ++) $ is '#' >>> valueParser Nil)
 
 -- | Write a parser for Person.
 --
@@ -579,7 +591,12 @@ phoneParser =
 personParser ::
   Parser Person
 personParser =
-  error "todo"
+ ageParser `flbindParser` 
+    (\a -> mapParser (\p -> p {age = a}) $ spaces1 >>> firstNameParser) `flbindParser` 
+    (\f -> mapParser (\p -> p {firstName = f}) $ spaces1 >>> surnameParser) `flbindParser` 
+    (\s -> mapParser (\p -> p {surname = s}) $ spaces1 >>> smokerParser) `flbindParser` 
+    (\sm -> mapParser (\p -> p {smoker = sm}) $ spaces1 >>> phoneParser) `flbindParser` 
+    (\ph -> mapParser (\p -> p {phone = ph}) $ valueParser $ Person 0 "" "" "" "")
 
 -- Make sure all the tests pass!
 
