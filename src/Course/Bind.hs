@@ -63,10 +63,10 @@ infixr 1 =<<
   f (a -> b)
   -> f a
   -> f b
-(<*>) f a =
-    (<$> a) =<< f
+(<*>) mf ma =
+    (<$> ma) =<< mf
 -- <$> a :: (a -> b) -> f b, i.e takes a function and applies it to a value
--- =<< f, feeds the function into the LHS
+-- =<< f, feeds the function into the LHS, remember f is m (a -> b)
 
 infixl 4 <*>
 
