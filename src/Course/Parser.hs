@@ -604,23 +604,28 @@ personParser =
 -- | Write a Functor instance for a @Parser@.
 -- /Tip:/ Use @bindParser@ and @valueParser@.
 instance Functor Parser where
+-- (a -> b) -> f a -> f b
   (<$>) =
-     error "todo"
+     mapParser
 
 -- | Write a Apply instance for a @Parser@.
 -- /Tip:/ Use @bindParser@ and @valueParser@.
 instance Apply Parser where
-  (<*>) =
-    error "todo"
+-- f (a -> b) -> f a -> f b
+ (P pf) <*> (P pa) = P (\i -> case pf i of
+    Result i' f -> case pa i' of
+        Result i'' a -> Result i'' (f a)
+        ErrorResult e -> ErrorResult e
+    ErrorResult e -> ErrorResult e)
 
 -- | Write an Applicative functor instance for a @Parser@.
 instance Applicative Parser where
   pure =
-    error "todo"
+    valueParser
 
 -- | Write a Bind instance for a @Parser@.
 instance Bind Parser where
   (=<<) =
-    error "todo"
+    bindParser
 
 instance Monad Parser where
