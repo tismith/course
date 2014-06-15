@@ -520,7 +520,7 @@ smokerParser =
 -- Result >a123-456< ""
 phoneBodyParser ::
   Parser Chars
-phoneBodyParser = list (digit ||| (is '-'))
+phoneBodyParser = list (digit ||| (is '-') ||| (is '.'))
 
 -- | Write a parser for Person.phone.
 --
@@ -592,11 +592,11 @@ personParser ::
   Parser Person
 personParser =
  ageParser `flbindParser` 
-    (\a -> mapParser (\p -> p {age = a}) $ spaces1 >>> firstNameParser) `flbindParser` 
-    (\f -> mapParser (\p -> p {firstName = f}) $ spaces1 >>> surnameParser) `flbindParser` 
-    (\s -> mapParser (\p -> p {surname = s}) $ spaces1 >>> smokerParser) `flbindParser` 
-    (\sm -> mapParser (\p -> p {smoker = sm}) $ spaces1 >>> phoneParser) `flbindParser` 
-    (\ph -> mapParser (\p -> p {phone = ph}) $ valueParser $ Person 0 "" "" "" "")
+    (\a -> mapParser (\p -> p {age = a}) $ spaces1 >>> firstNameParser `flbindParser` 
+    (\f -> mapParser (\p -> p {firstName = f}) $ spaces1 >>> surnameParser `flbindParser` 
+    (\s -> mapParser (\p -> p {surname = s}) $ spaces1 >>> smokerParser `flbindParser` 
+    (\sm -> mapParser (\p -> p {smoker = sm}) $ spaces1 >>> phoneParser `flbindParser` 
+    (\ph -> mapParser (\p -> p {phone = ph}) $ valueParser $ Person 0 "" "" 'n' "")))))
 
 -- Make sure all the tests pass!
 
