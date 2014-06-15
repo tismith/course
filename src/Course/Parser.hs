@@ -542,7 +542,10 @@ phoneBodyParser = list (digit ||| (is '-') ||| (is '.'))
 phoneParser ::
   Parser Chars
 phoneParser =
-    digit `flbindParser` (\x -> mapParser (x :.) $ (phoneBodyParser)) `flbindParser` (\y -> mapParser (y ++) $ is '#' >>> valueParser Nil)
+    ((<$>) (++)) 
+        (((<$>) (:.)) digit <*> phoneBodyParser) <*> 
+        (is '#' *> pure Nil)
+    --digit `flbindParser` (\x -> mapParser (x :.) $ (phoneBodyParser)) `flbindParser` (\y -> mapParser (y ++) $ is '#' >>> valueParser Nil)
 
 -- | Write a parser for Person.
 --
@@ -590,13 +593,20 @@ phoneParser =
 -- Result > rest< Person {age = 123, firstName = "Fred", surname = "Clarkson", smoker = 'y', phone = "123-456.789"}
 personParser ::
   Parser Person
-personParser =
- ageParser `flbindParser` 
-    (\a -> mapParser (\p -> p {age = a}) $ spaces1 >>> firstNameParser `flbindParser` 
-    (\f -> mapParser (\p -> p {firstName = f}) $ spaces1 >>> surnameParser `flbindParser` 
-    (\s -> mapParser (\p -> p {surname = s}) $ spaces1 >>> smokerParser `flbindParser` 
-    (\sm -> mapParser (\p -> p {smoker = sm}) $ spaces1 >>> phoneParser `flbindParser` 
-    (\ph -> mapParser (\p -> p {phone = ph}) $ valueParser $ Person 0 "" "" 'n' "")))))
+personParser = Person <$> 
+    ageParser <*> 
+    (spaces1 *> firstNameParser) <*>
+    (spaces1 *> surnameParser) <*> 
+    (spaces1 *> smokerParser) <*> 
+    (spaces1 *> phoneParser)
+----------------------------------------------------
+--  ageParser `flbindParser` 
+--     (\a -> mapParser (\p -> p {age = a}) $ spaces1 >>> firstNameParser `flbindParser` 
+--     (\f -> mapParser (\p -> p {firstName = f}) $ spaces1 >>> surnameParser `flbindParser` 
+--     (\s -> mapParser (\p -> p {surname = s}) $ spaces1 >>> smokerParser `flbindParser` 
+--     (\sm -> mapParser (\p -> p {smoker = sm}) $ spaces1 >>> phoneParser `flbindParser` 
+--     (\ph -> mapParser (\p -> p {phone = ph}) $ valueParser $ Person 0 "" "" 'n' "")))))
+---------------------------------------------------- 
 
 -- Make sure all the tests pass!
 
@@ -612,11 +622,16 @@ instance Functor Parser where
 -- /Tip:/ Use @bindParser@ and @valueParser@.
 instance Apply Parser where
 -- f (a -> b) -> f a -> f b
- (P pf) <*> (P pa) = P (\i -> case pf i of
-    Result i' f -> case pa i' of
-        Result i'' a -> Result i'' (f a)
-        ErrorResult e -> ErrorResult e
+ (P pf) <*> pa = P (\i -> case pf i of
+    Result i' f -> parse (mapParser f pa) i'
     ErrorResult e -> ErrorResult e)
+----------------------------------------------------
+--  (P pf) <*> (P pa) = P (\i -> case pf i of
+--     Result i' f -> case pa i' of
+--         Result i'' a -> Result i'' (f a)
+--         ErrorResult e -> ErrorResult e
+--     ErrorResult e -> ErrorResult e)
+---------------------------------------------------- 
 
 -- | Write an Applicative functor instance for a @Parser@.
 instance Applicative Parser where
