@@ -33,7 +33,7 @@ P p <.> i =
 spaces ::
   Parser Chars
 spaces =
-  error "todo"
+  list (space)
 
 -- | Write a function that applies the given parser, then parses 0 or more spaces,
 -- then produces the result of the original parser.
@@ -42,8 +42,8 @@ spaces =
 tok ::
   Parser a
   -> Parser a
-tok =
-  error "todo"
+tok p =
+  p >>= (\x -> spaces1 *> pure x)
 
 -- | Write a function that parses the given char followed by 0 or more spaces.
 --
@@ -52,7 +52,7 @@ charTok ::
   Char
   -> Parser Char
 charTok =
-  error "todo"
+  tok . is
 
 -- | Write a parser that parses a comma ',' followed by 0 or more spaces.
 --
@@ -60,7 +60,7 @@ charTok =
 commaTok ::
   Parser Char
 commaTok =
-  error "todo"
+  tok $ is ','
 
 -- | Write a parser that parses either a double-quote or a single-quote.
 --
@@ -77,7 +77,7 @@ commaTok =
 quote ::
   Parser Char
 quote =
-  error "todo"
+  is '\'' ||| is '"'
 
 -- | Write a function that parses the given string (fails otherwise).
 --
@@ -92,7 +92,7 @@ string ::
   Chars
   -> Parser Chars
 string =
-  error "todo"
+  traverse (is)
 
 -- | Write a function that parsers the given string, followed by 0 or more spaces.
 --
@@ -107,7 +107,7 @@ stringTok ::
   Chars
   -> Parser Chars
 stringTok =
-  error "todo"
+  tok . string 
 
 -- | Write a function that tries the given parser, otherwise succeeds by producing the given value.
 --
@@ -122,8 +122,7 @@ option ::
   a
   -> Parser a
   -> Parser a
-option =
-  error "todo"
+option a p = p ||| valueParser a
 
 -- | Write a parser that parses 1 or more digits.
 --
@@ -137,7 +136,7 @@ option =
 digits1 ::
   Parser Chars
 digits1 =
-  error "todo"
+  list1 digit
 
 -- | Write a function that parses one of the characters in the given string.
 --
@@ -152,7 +151,7 @@ oneof ::
   Chars
   -> Parser Char
 oneof =
-  error "todo"
+  satisfy . (flip elem)
 
 -- | Write a function that parses any character, but fails if it is in the given string.
 --
@@ -167,7 +166,7 @@ noneof ::
   Chars
   -> Parser Char
 noneof =
-  error "todo"
+    satisfy . (flip notElem)
 
 -- | Write a function that applies the first parser, runs the third parser keeping the result,
 -- then runs the second parser and produces the obtained result.
@@ -190,8 +189,8 @@ between ::
   -> Parser c
   -> Parser a
   -> Parser a
-between =
-  error "todo"
+between o c a = o *> a <* c
+  
 
 -- | Write a function that applies the given parser in between the two given characters.
 --
@@ -213,8 +212,8 @@ betweenCharTok ::
   -> Char
   -> Parser a
   -> Parser a
-betweenCharTok =
-  error "todo"
+betweenCharTok o c p =
+    between (charTok o) (charTok c) p
 
 -- | Write a function that parses the character 'u' followed by 4 hex digits and return the character value.
 --
