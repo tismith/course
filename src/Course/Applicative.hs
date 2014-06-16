@@ -144,6 +144,10 @@ replicateA n a = (:.) <$> a <*> replicateA (n - 1) a
 --
 -- >>> filtering (>) (4 :. 5 :. 6 :. 7 :. 8 :. 9 :. 10 :. 11 :. 12 :. Nil) 8
 -- [9,10,11,12]
+--
+-- >>> filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
+-- [[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3]]
+--
 filtering ::
   Applicative f =>
   (a -> f Bool)
@@ -153,10 +157,12 @@ filtering _ Nil = pure Nil
 filtering f (x :. xs) =
     let rest = filtering f xs in
     (((\a -> if a then (x:.) else id)) <$> f x) <*> rest
---filtering f (x :. xs) = ifThenElse <$> f x <*> ((x :.) <$> filtering f xs) <*> filtering f xs
--- ^^ this option is borked - it runs f heeeeeeeeeeeaps of times as it progresses through the list
 ----------------------------------------------------
--- Nicta solution
+-- filtering f (x :. xs) = ifThenElse <$> f x <*> ((x :.) <$> filtering f xs) <*> filtering f xs
+-- -- ^^ this option is borked - it runs f heeeeeeeeeeeaps of times as it progresses through the list
+---------------------------------------------------- 
+----------------------------------------------------
+-- -- Nicta solution
 -- filtering p = 
 --     foldRight (\a -> lift2 (\b -> if b then (a:.) else id) (p a)) (pure Nil)
 ---------------------------------------------------- 
