@@ -39,15 +39,31 @@ spaces =
 -- then produces the result of the original parser.
 --
 -- /Tip:/ Use the monad instance.
+--
+-- >>> parse (tok character) "c   "
+-- Result >< 'c'
+--
+-- >>> parse (tok character) "c"
+-- Result >< 'c'
+--
+-- >>> isErrorResult (parse (tok digit) "    1")
+-- True
 tok ::
   Parser a
   -> Parser a
 tok p =
-  p >>= (\x -> spaces1 *> pure x)
+  p <* spaces
 
 -- | Write a function that parses the given char followed by 0 or more spaces.
 --
 -- /Tip:/ Use `tok` and `is`.
+--
+-- >>> parse (charTok 'c') "c   "
+-- Result >< 'c'
+--
+-- >>> parse (charTok 'c') "c"
+-- Result >< 'c'
+--
 charTok ::
   Char
   -> Parser Char
@@ -261,8 +277,8 @@ sepby1 ::
   Parser a
   -> Parser s
   -> Parser (List a)
-sepby1 =
-  error "todo"
+sepby1 p s =
+  p ||| p >>= (\x -> mapParser (x :.) $ list (s *> p))
 
 -- | Write a function that produces a list of values coming off the given parser,
 -- separated by the second given parser.
@@ -284,9 +300,9 @@ sepby ::
   Parser a
   -> Parser s
   -> Parser (List a)
-sepby =
-  error "todo"
-
+sepby p s =
+    sepby1 p s ||| valueParser Nil
+  
 -- | Write a parser that asserts that there is no remaining input.
 --
 -- >>> parse eof ""
@@ -297,7 +313,9 @@ sepby =
 eof ::
   Parser ()
 eof =
-  error "todo"
+  P (\i -> case i of 
+        Nil -> Result i ()
+        _ -> ErrorResult $ ExpectedEof i)
 
 -- | Write a parser that produces a characer that satisfies all of the given predicates.
 --
@@ -320,8 +338,12 @@ eof =
 satisfyAll ::
   List (Char -> Bool)
   -> Parser Char
-satisfyAll =
-  error "todo"
+satisfyAll fs = P (\i -> case i of
+                        Nil -> ErrorResult UnexpectedEof
+                        --(x :. xs) -> if and $ map ($ x) fs 
+                        (x :. xs) -> if and $ sequence fs x 
+                            then Result xs x
+                            else ErrorResult $ UnexpectedChar x)
 
 -- | Write a parser that produces a characer that satisfies any of the given predicates.
 --
@@ -341,8 +363,12 @@ satisfyAll =
 satisfyAny ::
   List (Char -> Bool)
   -> Parser Char
-satisfyAny =
-  error "todo"
+satisfyAny fs = P (\i -> case i of
+                        Nil -> ErrorResult UnexpectedEof
+                        --(x :. xs) -> if or $ map ($ x) fs 
+                        (x :. xs) -> if or $ sequence fs x 
+                            then Result xs x
+                            else ErrorResult $ UnexpectedChar x)
 
 -- | Write a parser that parses between the two given characters, separated by a comma character ','.
 --
@@ -350,6 +376,9 @@ satisfyAny =
 --
 -- >>> parse (betweenSepbyComma '[' ']' lower) "[a]"
 -- Result >< "a"
+--
+-- >>> parse (betweenSepbyComma '[' ']' lower) "[a, b]"
+-- Result >< "ab"
 --
 -- >>> parse (betweenSepbyComma '[' ']' lower) "[]"
 -- Result >< ""
@@ -370,5 +399,4 @@ betweenSepbyComma ::
   -> Char
   -> Parser a
   -> Parser (List a)
-betweenSepbyComma =
-  error "todo"
+betweenSepbyComma o c p = betweenCharTok o c $ sepby p $ charTok ','
