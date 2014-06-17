@@ -235,8 +235,11 @@ betweenCharTok o c p =
 -- True
 hex ::
   Parser Char
-hex =
-  error "todo"
+hex = 
+    is 'u' *> (sequence $ replicate 4 $ satisfy isHexDigit) >>=
+            (\h -> case readHex h of
+                    Full x -> valueParser $ chr x
+                    Empty -> failed)
 
 -- | Write a function that produces a non-empty list of values coming off the given parser (which must succeed at least once),
 -- separated by the second given parser.
