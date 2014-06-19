@@ -317,10 +317,10 @@ digit = satisfy (isDigit)
 -- /Tip:/ Use the @bindParser@, @valueParser@, @list@, @read@ and @digit@
 -- functions.
 -- >>> parse (natural) "123"
--- Result >< 123 
+-- Result >< 123
 --
 -- >>> parse (natural) "123ab"
--- Result >ab< 123 
+-- Result >ab< 123
 --
 -- >>> isErrorResult (parse (natural) "abc")
 -- True
